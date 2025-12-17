@@ -2,7 +2,7 @@
 
 ## Configuration Details
 
-**Student ID:** [YOUR_STUDENT_ID_HERE]
+
 
 **Angular Version:**
 ```
