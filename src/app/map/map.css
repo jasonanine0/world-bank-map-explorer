@@ -1,0 +1,160 @@
+/* Add this to your map.css file */
+
+/* Container with two columns */
+.container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Map column */
+.map-column {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Info column */
+.info-column {
+  flex: 1;
+  min-width: 0;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Map container */
+.map-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.map-container svg {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Country details */
+.country-details {
+  margin-top: 20px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.info-item .label {
+  font-weight: 600;
+  color: #333;
+}
+
+.info-item .value {
+  color: #666;
+  text-align: right;
+}
+
+/* Loading and error states */
+.loading, .error, .no-selection {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+/* MOBILE RESPONSIVE - CRITICAL */
+@media screen and (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .map-column {
+    width: 100%;
+  }
+  
+  .info-column {
+    width: 100%;
+    padding: 15px;
+  }
+  
+  .map-column h2,
+  .info-column h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .instruction {
+    font-size: 14px;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .info-item .label {
+    font-size: 14px;
+  }
+  
+  .info-item .value {
+    font-size: 14px;
+    text-align: left;
+  }
+  
+  /* Make map touchable on mobile */
+  .map-container svg path {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Extra small phones */
+@media screen and (max-width: 480px) {
+  .container {
+    padding: 5px;
+  }
+  
+  .info-column {
+    padding: 10px;
+  }
+  
+  .map-column h2,
+  .info-column h2 {
+    font-size: 18px;
+  }
+  
+  .instruction {
+    font-size: 12px;
+  }
+}
+
+/* Clear button - if you added it */
+.clear-btn {
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+@media screen and (min-width: 769px) {
+  .clear-btn {
+    width: auto;
+  }
+}
