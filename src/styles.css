@@ -41,3 +41,46 @@ app-root {
     max-width: 100vw !important;
   }
 }
+
+/* ========================================
+   MOBILE SCROLLING FIX
+   ======================================== */
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+app-root {
+  display: block;
+  min-height: 100vh;
+  overflow-y: auto !important;
+}
+
+app-map {
+  display: block;
+  min-height: 100vh;
+  overflow-y: auto !important;
+}
+
+@media (max-width: 768px) {
+  body {
+    position: relative;
+    overflow-y: auto !important;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .map-container {
+    overflow-y: visible !important;
+    height: auto !important;
+  }
+  
+  .country-info {
+    overflow-y: visible !important;
+    max-height: none !important;
+  }
+}
