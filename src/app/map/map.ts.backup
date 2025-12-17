@@ -3,20 +3,10 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
 import { WorldBank, CountryInfo } from '../services/world-bank';
-import { SearchComponent } from '../search/search.component';
-import { LoadingComponent } from '../loading/loading.component';
-import { ErrorComponent } from '../error/error.component';
-import { ChartComponent } from '../chart/chart.component';
 
 @Component({
   selector: 'app-map',
-  imports: [
-    CommonModule, 
-    SearchComponent, 
-    LoadingComponent, 
-    ErrorComponent,
-    ChartComponent
-  ],
+  imports: [CommonModule],
   templateUrl: './map.html',
   styleUrl: './map.css',
 })
@@ -25,29 +15,18 @@ export class Map implements OnInit {
   selectedCountry: CountryInfo | null = null;
   isLoading: boolean = false;
   errorMessage: string = '';
-  showError: boolean = false;
-
-  // Search and filter properties
-  searchQuery: string = '';
-  selectedRegion: string = '';
-  allCountries: any[] = [];
-  filteredCountries: any[] = [];
   
-  // Chart data
-  chartData: any = null;
-  showChart: boolean = false;
-
   // LocalStorage key for persistence
   private readonly STORAGE_KEY = 'selectedCountry';
   private readonly SELECTED_COUNTRY_CODE_KEY = 'selectedCountryCode';
-
+  
   // Track currently selected path element
   private selectedPath: SVGPathElement | null = null;
-
+  
   // Colors
   private readonly DEFAULT_COLOR = '#ddd';
   private readonly HOVER_COLOR = '#4CAF50';
-  private readonly SELECTED_COLOR = '#2196F3';
+  private readonly SELECTED_COLOR = '#2196F3'; // Blue for selected
 
   constructor(
     private worldBankService: WorldBank,
@@ -59,62 +38,8 @@ export class Map implements OnInit {
 
   ngOnInit(): void {
     this.loadSvgMap();
+    // Load previously selected country from localStorage
     this.loadSelectedCountryFromStorage();
-    this.loadAllCountries();
-  }
-
-  /**
-   * Load all countries for search functionality
-   */
-  loadAllCountries(): void {
-    this.worldBankService.getAllCountries().subscribe({
-      next: (countries) => {
-        this.allCountries = countries;
-        this.filteredCountries = countries;
-      },
-      error: (error) => {
-        console.error('Error loading countries:', error);
-      }
-    });
-  }
-
-  /**
-   * Handle search query changes
-   */
-  onSearchChange(query: string): void {
-    this.searchQuery = query.toLowerCase();
-    this.filterCountries();
-  }
-
-  /**
-   * Handle region filter changes
-   */
-  onRegionChange(region: string): void {
-    this.selectedRegion = region;
-    this.filterCountries();
-  }
-
-  /**
-   * Filter countries based on search and region
-   */
-  filterCountries(): void {
-    let filtered = this.allCountries;
-    
-    if (this.searchQuery) {
-      filtered = filtered.filter(country => 
-        country.name?.toLowerCase().includes(this.searchQuery) ||
-        country.region?.value?.toLowerCase().includes(this.searchQuery) ||
-        country.incomeLevel?.value?.toLowerCase().includes(this.searchQuery)
-      );
-    }
-    
-    if (this.selectedRegion) {
-      filtered = filtered.filter(country => 
-        country.region?.value === this.selectedRegion
-      );
-    }
-    
-    this.filteredCountries = filtered;
   }
 
   /**
@@ -125,15 +50,16 @@ export class Map implements OnInit {
       .subscribe({
         next: (svgData) => {
           this.svgContent = this.sanitizer.bypassSecurityTrustHtml(svgData);
+          // Wait for Angular to render the SVG before attaching listeners
           setTimeout(() => {
             this.attachEventListeners();
+            // Restore visual selection after SVG loads
             this.restoreVisualSelection();
           }, 100);
         },
         error: (error) => {
           console.error('Error loading SVG map:', error);
           this.errorMessage = 'Failed to load map. Please refresh the page.';
-          this.showError = true;
         }
       });
   }
@@ -159,19 +85,22 @@ export class Map implements OnInit {
 
     countryPaths.forEach((path: Element) => {
       const svgPath = path as SVGPathElement;
-
+      
+      // Use Renderer2 for better Angular integration
       this.renderer.listen(svgPath, 'click', (event: Event) => this.onCountryClick(event));
-
+      
       this.renderer.listen(svgPath, 'mouseenter', (event: Event) => {
         const target = event.target as SVGPathElement;
+        // Only change color on hover if it's not the selected country
         if (target !== this.selectedPath) {
           this.renderer.setStyle(target, 'fill', this.HOVER_COLOR);
         }
         this.renderer.setStyle(target, 'cursor', 'pointer');
       });
-
+      
       this.renderer.listen(svgPath, 'mouseleave', (event: Event) => {
         const target = event.target as SVGPathElement;
+        // Restore to default only if it's not the selected country
         if (target !== this.selectedPath) {
           this.renderer.setStyle(target, 'fill', this.DEFAULT_COLOR);
         }
@@ -181,98 +110,55 @@ export class Map implements OnInit {
 
   /**
    * Handles click events on country paths in the SVG map
+   * Triggers the service method to fetch country information
+   * Saves selected country to localStorage and highlights it
+   * @param event Mouse click event from the SVG path element
    */
   onCountryClick(event: Event): void {
     const target = event.target as SVGPathElement;
     const countryCode = target.getAttribute('id');
-
+    
     console.log('Country clicked:', countryCode);
-
+    
     if (countryCode) {
+      // Reset previous selection color
       if (this.selectedPath) {
         this.renderer.setStyle(this.selectedPath, 'fill', this.DEFAULT_COLOR);
       }
-
+      
+      // Set new selection
       this.selectedPath = target;
       this.renderer.setStyle(this.selectedPath, 'fill', this.SELECTED_COLOR);
+      
+      // Save selected country code for visual restoration
       localStorage.setItem(this.SELECTED_COUNTRY_CODE_KEY, countryCode);
-
-      this.loadCountryData(countryCode);
-    }
-  }
-
-  /**
-   * Load country data with loading state and error handling
-   */
-  loadCountryData(countryCode: string): void {
-    this.isLoading = true;
-    this.showError = false;
-    this.errorMessage = '';
-    this.showChart = false;
-
-    this.worldBankService.getCountryInfo(countryCode).subscribe({
-      next: (countryInfo) => {
-        this.selectedCountry = countryInfo;
-        this.isLoading = false;
-        this.saveSelectedCountryToStorage(countryInfo);
-        
-        // Load chart data after country info is loaded
-        this.loadChartData(countryCode);
-        
-        console.log('✅ Country loaded:', countryInfo.name);
-      },
-      error: (error) => {
-        console.error('Error fetching country data:', error);
-        this.errorMessage = 'Failed to load country information. Please try again.';
-        this.showError = true;
-        this.isLoading = false;
-      }
-    });
-  }
-
-  /**
-   * Load GDP chart data for selected country
-   */
-  loadChartData(countryCode: string): void {
-    // GDP indicator: NY.GDP.MKTP.CD
-    this.worldBankService.getIndicator(countryCode, 'NY.GDP.MKTP.CD', 10).subscribe({
-      next: (data) => {
-        if (data && data.length > 0) {
-          // Filter out null values and reverse to show chronologically
-          const validData = data.filter((d: any) => d.value !== null);
-          const years = validData.map((d: any) => d.date).reverse();
-          const values = validData.map((d: any) => d.value).reverse();
+      
+      this.isLoading = true;
+      this.errorMessage = '';
+      
+      // Call the service method to get country information
+      this.worldBankService.getCountryInfo(countryCode).subscribe({
+        next: (countryInfo) => {
+          this.selectedCountry = countryInfo;
+          this.isLoading = false;
           
-          if (years.length > 0) {
-            this.chartData = {
-              labels: years,
-              values: values,
-              label: 'GDP (Current US$)'
-            };
-            this.showChart = true;
-          }
+          // Save selected country to localStorage
+          this.saveSelectedCountryToStorage(countryInfo);
+          
+          console.log('✅ Country loaded and saved:', countryInfo.name);
+        },
+        error: (error) => {
+          console.error('Error fetching country data:', error);
+          this.errorMessage = 'Failed to load country information. Please try again.';
+          this.isLoading = false;
         }
-      },
-      error: (error) => {
-        console.error('Error loading chart data:', error);
-        // Don't show error for chart - it's optional
-      }
-    });
-  }
-
-  /**
-   * Handle error retry
-   */
-  handleErrorRetry(): void {
-    this.showError = false;
-    const savedCountryCode = localStorage.getItem(this.SELECTED_COUNTRY_CODE_KEY);
-    if (savedCountryCode) {
-      this.loadCountryData(savedCountryCode);
+      });
     }
   }
 
   /**
    * Saves selected country to localStorage for persistence
+   * @param country The country info to save
    */
   private saveSelectedCountryToStorage(country: CountryInfo): void {
     try {
@@ -293,17 +179,20 @@ export class Map implements OnInit {
   private loadSelectedCountryFromStorage(): void {
     try {
       const savedCountry = localStorage.getItem(this.STORAGE_KEY);
-
+      
       if (savedCountry) {
         const country = JSON.parse(savedCountry);
+        
+        // Check if saved data is less than 7 days old
         const savedDate = new Date(country.savedAt);
         const now = new Date();
         const daysDiff = (now.getTime() - savedDate.getTime()) / (1000 * 60 * 60 * 24);
-
+        
         if (daysDiff < 7) {
           this.selectedCountry = country;
           console.log('📥 Loaded saved country:', country.name);
         } else {
+          // Clear old data
           localStorage.removeItem(this.STORAGE_KEY);
           localStorage.removeItem(this.SELECTED_COUNTRY_CODE_KEY);
           console.log('🗑️ Cleared old saved country data');
@@ -311,6 +200,7 @@ export class Map implements OnInit {
       }
     } catch (error) {
       console.error('❌ Error loading from localStorage:', error);
+      // Clear corrupted data
       localStorage.removeItem(this.STORAGE_KEY);
       localStorage.removeItem(this.SELECTED_COUNTRY_CODE_KEY);
     }
@@ -322,7 +212,7 @@ export class Map implements OnInit {
   private restoreVisualSelection(): void {
     try {
       const savedCountryCode = localStorage.getItem(this.SELECTED_COUNTRY_CODE_KEY);
-
+      
       if (savedCountryCode) {
         const mapContainer = this.elementRef.nativeElement.querySelector('.map-container');
         if (!mapContainer) return;
@@ -330,8 +220,9 @@ export class Map implements OnInit {
         const svgElement = mapContainer.querySelector('svg');
         if (!svgElement) return;
 
+        // Find the path with matching country code
         const countryPath = svgElement.querySelector(`path[id="${savedCountryCode}"]`);
-
+        
         if (countryPath) {
           this.selectedPath = countryPath as SVGPathElement;
           this.renderer.setStyle(this.selectedPath, 'fill', this.SELECTED_COLOR);
@@ -347,17 +238,17 @@ export class Map implements OnInit {
    * Clears the selected country and resets visual selection
    */
   clearSelection(): void {
+    // Reset visual selection
     if (this.selectedPath) {
       this.renderer.setStyle(this.selectedPath, 'fill', this.DEFAULT_COLOR);
       this.selectedPath = null;
     }
-
+    
+    // Clear data
     this.selectedCountry = null;
-    this.showChart = false;
-    this.chartData = null;
     localStorage.removeItem(this.STORAGE_KEY);
     localStorage.removeItem(this.SELECTED_COUNTRY_CODE_KEY);
-
+    
     console.log('🗑️ Selection cleared');
   }
 }

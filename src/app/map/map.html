@@ -1,76 +1,101 @@
-<div class="container">
-  <!-- Left Column: Map -->
-  <div class="map-column">
-    <h2>World Map</h2>
-    <p class="instruction">Click on any country to view its information</p>
-    <div class="map-container" [innerHTML]="svgContent"></div>
+<div class="map-wrapper">
+  <!-- Loading Component -->
+  <app-loading [isLoading]="isLoading" message="Loading country data..."></app-loading>
+  
+  <!-- Error Component -->
+  <app-error 
+    [show]="showError"
+    [message]="errorMessage"
+    title="Error Loading Data"
+    (retry)="handleErrorRetry()"
+    (close)="showError = false"
+  ></app-error>
+
+  <!-- Header Section -->
+  <div class="map-header">
+    <h1>World Bank Map Explorer</h1>
+    <p>Explore countries around the world and view their economic data</p>
   </div>
 
-  <!-- Right Column: Country Information -->
-  <div class="info-column">
-    <div class="header-with-clear">
-      <h2>Country Information</h2>
-      <!-- Clear Selection Button (NEW) -->
-      <button 
-        *ngIf="selectedCountry && !isLoading" 
-        (click)="clearSelection()" 
-        class="clear-btn"
-        title="Clear selection">
-        ✕ Clear
-      </button>
-    </div>
-    
-    <!-- Loading State -->
-    <div *ngIf="isLoading" class="loading">
-      <p>Loading country information...</p>
+  <!-- Search Component -->
+  <app-search
+    (searchChange)="onSearchChange($event)"
+    (regionChange)="onRegionChange($event)"
+  ></app-search>
+
+  <div class="container">
+    <!-- Left Column: Map -->
+    <div class="map-column">
+      <h2>World Map</h2>
+      <p class="instruction">Click on any country to view its information</p>
+      <div class="map-container" [innerHTML]="svgContent"></div>
     </div>
 
-    <!-- Error State -->
-    <div *ngIf="errorMessage" class="error">
-      <p>{{ errorMessage }}</p>
-    </div>
-
-    <!-- No Country Selected -->
-    <div *ngIf="!selectedCountry && !isLoading && !errorMessage" class="no-selection">
-      <p>Select a country on the map to view its details</p>
-    </div>
-
-    <!-- Country Information Display -->
-    <div *ngIf="selectedCountry && !isLoading" class="country-details">
-      <!-- Show when country was saved (NEW) -->
-      <div class="saved-indicator" *ngIf="selectedCountry">
-        <small>💾 Last selected: {{ selectedCountry.savedAt || 'Just now' | date:'short' }}</small>
+    <!-- Right Column: Country Information -->
+    <div class="info-column">
+      <div class="header-with-clear">
+        <h2>Country Information</h2>
+        <!-- Clear Selection Button -->
+        <button 
+          *ngIf="selectedCountry && !isLoading" 
+          (click)="clearSelection()" 
+          class="clear-btn"
+          title="Clear selection">
+          ✕ Clear
+        </button>
       </div>
 
-      <div class="info-item">
-        <span class="label">Country Name:</span>
-        <span class="value">{{ selectedCountry.name }}</span>
+      <!-- No Country Selected -->
+      <div *ngIf="!selectedCountry && !isLoading && !showError" class="no-selection">
+        <p>Select a country on the map to view its details</p>
       </div>
 
-      <div class="info-item">
-        <span class="label">Capital City:</span>
-        <span class="value">{{ selectedCountry.capital }}</span>
+      <!-- Country Information Display -->
+      <div *ngIf="selectedCountry && !isLoading" class="country-details">
+        <!-- Show when country was saved -->
+        <div class="saved-indicator" *ngIf="selectedCountry.savedAt">
+          <small>💾 Last selected: {{ selectedCountry.savedAt | date:'short' }}</small>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Country Name:</span>
+          <span class="value">{{ selectedCountry.name }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Capital City:</span>
+          <span class="value">{{ selectedCountry.capital }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Region:</span>
+          <span class="value">{{ selectedCountry.region }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Income Level:</span>
+          <span class="value">{{ selectedCountry.incomeLevel }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Longitude:</span>
+          <span class="value">{{ selectedCountry.longitude }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Latitude:</span>
+          <span class="value">{{ selectedCountry.latitude }}</span>
+        </div>
       </div>
 
-      <div class="info-item">
-        <span class="label">Region:</span>
-        <span class="value">{{ selectedCountry.region }}</span>
-      </div>
-
-      <div class="info-item">
-        <span class="label">Income Level:</span>
-        <span class="value">{{ selectedCountry.incomeLevel }}</span>
-      </div>
-
-      <div class="info-item">
-        <span class="label">Longitude:</span>
-        <span class="value">{{ selectedCountry.longitude }}</span>
-      </div>
-
-      <div class="info-item">
-        <span class="label">Latitude:</span>
-        <span class="value">{{ selectedCountry.latitude }}</span>
-      </div>
+      <!-- Chart Component - Shows GDP data -->
+      <app-chart
+        *ngIf="showChart && chartData && selectedCountry"
+        [data]="chartData"
+        [type]="'line'"
+        [title]="'GDP Trend (Last 10 Years)'"
+        [description]="'Historical GDP data from World Bank for ' + selectedCountry.name"
+      ></app-chart>
     </div>
   </div>
 </div>

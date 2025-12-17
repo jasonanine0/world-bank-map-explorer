@@ -46,6 +46,7 @@ app-root {
    MOBILE SCROLLING FIX
    ======================================== */
 
+/* Mobile Scrolling Fix */
 html, body {
   height: 100%;
   width: 100%;
@@ -72,15 +73,5 @@ app-map {
     overflow-y: auto !important;
     height: auto;
     min-height: 100vh;
-  }
-  
-  .map-container {
-    overflow-y: visible !important;
-    height: auto !important;
-  }
-  
-  .country-info {
-    overflow-y: visible !important;
-    max-height: none !important;
   }
 }
