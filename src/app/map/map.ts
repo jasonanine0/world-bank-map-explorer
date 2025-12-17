@@ -27,27 +27,97 @@ export class Map implements OnInit {
   errorMessage: string = '';
   showError: boolean = false;
 
-  // Search and filter properties
   searchQuery: string = '';
   selectedRegion: string = '';
-  allCountries: any[] = [];
-  filteredCountries: any[] = [];
   
-  // Chart data
   chartData: any = null;
   showChart: boolean = false;
 
-  // LocalStorage key for persistence
   private readonly STORAGE_KEY = 'selectedCountry';
   private readonly SELECTED_COUNTRY_CODE_KEY = 'selectedCountryCode';
-
-  // Track currently selected path element
   private selectedPath: SVGPathElement | null = null;
 
-  // Colors
   private readonly DEFAULT_COLOR = '#ddd';
   private readonly HOVER_COLOR = '#4CAF50';
   private readonly SELECTED_COLOR = '#2196F3';
+
+  private readonly COUNTRY_NAMES: { [key: string]: string } = {
+    'us': 'United States', 'ca': 'Canada', 'mx': 'Mexico', 'br': 'Brazil', 'ar': 'Argentina',
+    'gb': 'United Kingdom', 'fr': 'France', 'de': 'Germany', 'it': 'Italy', 'es': 'Spain',
+    'ru': 'Russia', 'cn': 'China', 'in': 'India', 'jp': 'Japan', 'au': 'Australia',
+    'za': 'South Africa', 'ng': 'Nigeria', 'eg': 'Egypt', 'ke': 'Kenya', 'et': 'Ethiopia',
+    'gh': 'Ghana', 'ao': 'Angola', 'tz': 'Tanzania', 'ug': 'Uganda', 'ma': 'Morocco',
+    'dz': 'Algeria', 'sd': 'Sudan', 'cm': 'Cameroon', 'ne': 'Niger', 'bf': 'Burkina Faso',
+    'ml': 'Mali', 'mw': 'Malawi', 'zm': 'Zambia', 'sn': 'Senegal', 'so': 'Somalia',
+    'td': 'Chad', 'gn': 'Guinea', 'rw': 'Rwanda', 'bj': 'Benin', 'tn': 'Tunisia',
+    'bi': 'Burundi', 'ss': 'South Sudan', 'tg': 'Togo', 'sl': 'Sierra Leone', 'ly': 'Libya',
+    'lr': 'Liberia', 'mr': 'Mauritania', 'cf': 'Central African Republic', 'er': 'Eritrea',
+    'gm': 'Gambia', 'bw': 'Botswana', 'na': 'Namibia', 'ga': 'Gabon', 'ls': 'Lesotho',
+    'gw': 'Guinea-Bissau', 'gq': 'Equatorial Guinea', 'mu': 'Mauritius', 'sz': 'Swaziland',
+    'tr': 'Turkey', 'ir': 'Iran', 'iq': 'Iraq', 'sa': 'Saudi Arabia', 'ye': 'Yemen',
+    'sy': 'Syria', 'jo': 'Jordan', 'ae': 'United Arab Emirates', 'il': 'Israel', 'lb': 'Lebanon',
+    'om': 'Oman', 'kw': 'Kuwait', 'qa': 'Qatar', 'bh': 'Bahrain', 'ps': 'Palestine',
+    'af': 'Afghanistan', 'pk': 'Pakistan', 'bd': 'Bangladesh', 'lk': 'Sri Lanka', 'mm': 'Myanmar',
+    'th': 'Thailand', 'vn': 'Vietnam', 'ph': 'Philippines', 'my': 'Malaysia', 'sg': 'Singapore',
+    'id': 'Indonesia', 'kh': 'Cambodia', 'la': 'Laos', 'np': 'Nepal', 'bt': 'Bhutan',
+    'kr': 'South Korea', 'kp': 'North Korea', 'mn': 'Mongolia', 'kz': 'Kazakhstan',
+    'uz': 'Uzbekistan', 'tm': 'Turkmenistan', 'kg': 'Kyrgyzstan', 'tj': 'Tajikistan',
+    'pl': 'Poland', 'ua': 'Ukraine', 'ro': 'Romania', 'cz': 'Czech Republic', 'gr': 'Greece',
+    'pt': 'Portugal', 'hu': 'Hungary', 'by': 'Belarus', 'at': 'Austria', 'rs': 'Serbia',
+    'ch': 'Switzerland', 'bg': 'Bulgaria', 'dk': 'Denmark', 'fi': 'Finland', 'sk': 'Slovakia',
+    'no': 'Norway', 'ie': 'Ireland', 'hr': 'Croatia', 'ba': 'Bosnia', 'lt': 'Lithuania',
+    'si': 'Slovenia', 'lv': 'Latvia', 'ee': 'Estonia', 'mk': 'Macedonia', 'al': 'Albania',
+    'md': 'Moldova', 'me': 'Montenegro', 'se': 'Sweden', 'be': 'Belgium', 'nl': 'Netherlands',
+    'lu': 'Luxembourg', 'nz': 'New Zealand', 'pg': 'Papua New Guinea', 'fj': 'Fiji',
+    'gt': 'Guatemala', 'cu': 'Cuba', 'ht': 'Haiti', 'do': 'Dominican Republic', 'hn': 'Honduras',
+    'ni': 'Nicaragua', 'sv': 'El Salvador', 'cr': 'Costa Rica', 'pa': 'Panama', 'jm': 'Jamaica',
+    've': 'Venezuela', 'co': 'Colombia', 'ec': 'Ecuador', 'pe': 'Peru', 'cl': 'Chile',
+    'bo': 'Bolivia', 'py': 'Paraguay', 'uy': 'Uruguay', 'gy': 'Guyana', 'sr': 'Suriname',
+    'is': 'Iceland', 'gl': 'Greenland'
+  };
+
+  private readonly COUNTRY_REGIONS: { [key: string]: string } = {
+    'ng': 'Africa', 'eg': 'Africa', 'za': 'Africa', 'ke': 'Africa', 'et': 'Africa',
+    'gh': 'Africa', 'ao': 'Africa', 'tz': 'Africa', 'ug': 'Africa', 'ma': 'Africa',
+    'dz': 'Africa', 'sd': 'Africa', 'cm': 'Africa', 'ne': 'Africa', 'bf': 'Africa',
+    'ml': 'Africa', 'mw': 'Africa', 'zm': 'Africa', 'sn': 'Africa', 'so': 'Africa',
+    'td': 'Africa', 'gn': 'Africa', 'rw': 'Africa', 'bj': 'Africa', 'tn': 'Africa',
+    'bi': 'Africa', 'ss': 'Africa', 'tg': 'Africa', 'sl': 'Africa', 'ly': 'Africa',
+    'lr': 'Africa', 'mr': 'Africa', 'cf': 'Africa', 'er': 'Africa', 'gm': 'Africa',
+    'bw': 'Africa', 'na': 'Africa', 'ga': 'Africa', 'ls': 'Africa', 'gw': 'Africa',
+    'gq': 'Africa', 'mu': 'Africa', 'sz': 'Africa', 'dj': 'Africa', 'km': 'Africa',
+    'cv': 'Africa', 'st': 'Africa', 'sc': 'Africa',
+    'cn': 'Asia', 'in': 'Asia', 'jp': 'Asia', 'af': 'Asia', 'pk': 'Asia',
+    'bd': 'Asia', 'lk': 'Asia', 'mm': 'Asia', 'th': 'Asia', 'vn': 'Asia',
+    'ph': 'Asia', 'my': 'Asia', 'sg': 'Asia', 'id': 'Asia', 'kh': 'Asia',
+    'la': 'Asia', 'np': 'Asia', 'bt': 'Asia', 'kr': 'Asia', 'kp': 'Asia',
+    'mn': 'Asia', 'kz': 'Asia', 'uz': 'Asia', 'tm': 'Asia', 'kg': 'Asia', 'tj': 'Asia',
+    'gb': 'Europe', 'fr': 'Europe', 'de': 'Europe', 'it': 'Europe', 'es': 'Europe',
+    'ru': 'Europe', 'pl': 'Europe', 'ua': 'Europe', 'ro': 'Europe', 'cz': 'Europe',
+    'gr': 'Europe', 'pt': 'Europe', 'hu': 'Europe', 'by': 'Europe', 'at': 'Europe',
+    'rs': 'Europe', 'ch': 'Europe', 'bg': 'Europe', 'dk': 'Europe', 'fi': 'Europe',
+    'sk': 'Europe', 'no': 'Europe', 'ie': 'Europe', 'hr': 'Europe', 'ba': 'Europe',
+    'lt': 'Europe', 'si': 'Europe', 'lv': 'Europe', 'ee': 'Europe', 'mk': 'Europe',
+    'al': 'Europe', 'md': 'Europe', 'me': 'Europe', 'se': 'Europe', 'be': 'Europe',
+    'nl': 'Europe', 'lu': 'Europe', 'is': 'Europe',
+    'us': 'North America', 'ca': 'North America', 'mx': 'North America',
+    'gt': 'North America', 'cu': 'North America', 'ht': 'North America',
+    'do': 'North America', 'hn': 'North America', 'ni': 'North America',
+    'sv': 'North America', 'cr': 'North America', 'pa': 'North America',
+    'jm': 'North America', 'tt': 'North America', 'bs': 'North America',
+    'bz': 'North America', 'bb': 'North America', 'gl': 'North America',
+    'br': 'South America', 'ar': 'South America', 've': 'South America',
+    'co': 'South America', 'ec': 'South America', 'pe': 'South America',
+    'cl': 'South America', 'bo': 'South America', 'py': 'South America',
+    'uy': 'South America', 'gy': 'South America', 'sr': 'South America', 'gf': 'South America',
+    'au': 'Oceania', 'nz': 'Oceania', 'pg': 'Oceania', 'fj': 'Oceania',
+    'sb': 'Oceania', 'vu': 'Oceania', 'nc': 'Oceania', 'pf': 'Oceania',
+    'tr': 'Middle East', 'ir': 'Middle East', 'iq': 'Middle East',
+    'sa': 'Middle East', 'ye': 'Middle East', 'sy': 'Middle East',
+    'jo': 'Middle East', 'ae': 'Middle East', 'il': 'Middle East',
+    'lb': 'Middle East', 'om': 'Middle East', 'kw': 'Middle East',
+    'qa': 'Middle East', 'bh': 'Middle East', 'ps': 'Middle East'
+  };
 
   constructor(
     private worldBankService: WorldBank,
@@ -60,66 +130,95 @@ export class Map implements OnInit {
   ngOnInit(): void {
     this.loadSvgMap();
     this.loadSelectedCountryFromStorage();
-    this.loadAllCountries();
   }
 
-  /**
-   * Load all countries for search functionality
-   */
-  loadAllCountries(): void {
-    this.worldBankService.getAllCountries().subscribe({
-      next: (countries) => {
-        this.allCountries = countries;
-        this.filteredCountries = countries;
-      },
-      error: (error) => {
-        console.error('Error loading countries:', error);
-      }
-    });
-  }
-
-  /**
-   * Handle search query changes
-   */
   onSearchChange(query: string): void {
     this.searchQuery = query.toLowerCase();
-    this.filterCountries();
+    this.filterCountriesOnMap();
   }
 
-  /**
-   * Handle region filter changes
-   */
   onRegionChange(region: string): void {
     this.selectedRegion = region;
-    this.filterCountries();
+    this.filterCountriesOnMap();
   }
 
-  /**
-   * Filter countries based on search and region
-   */
-  filterCountries(): void {
-    let filtered = this.allCountries;
+  filterCountriesOnMap(): void {
+    const mapContainer = this.elementRef.nativeElement.querySelector('.map-container');
+    if (!mapContainer) return;
+
+    const svgElement = mapContainer.querySelector('svg');
+    if (!svgElement) return;
+
+    const allPaths = svgElement.querySelectorAll('path[id]');
+    let matchCount = 0;
     
-    if (this.searchQuery) {
-      filtered = filtered.filter(country => 
-        country.name?.toLowerCase().includes(this.searchQuery) ||
-        country.region?.value?.toLowerCase().includes(this.searchQuery) ||
-        country.incomeLevel?.value?.toLowerCase().includes(this.searchQuery)
-      );
+    const regionColors: { [key: string]: string } = {
+      'Africa': '#FF6B6B',
+      'Asia': '#4ECDC4',
+      'Europe': '#45B7D1',
+      'North America': '#FFA07A',
+      'South America': '#98D8C8',
+      'Oceania': '#F7DC6F',
+      'Middle East': '#BB8FCE'
+    };
+    
+    if ((!this.searchQuery || this.searchQuery.length === 0) && !this.selectedRegion) {
+      allPaths.forEach((path: Element) => {
+        const svgPath = path as SVGPathElement;
+        if (svgPath !== this.selectedPath) {
+          this.renderer.setStyle(svgPath, 'fill', this.DEFAULT_COLOR);
+        }
+        this.renderer.setStyle(svgPath, 'opacity', '1');
+        this.renderer.setStyle(svgPath, 'pointer-events', 'auto');
+      });
+      return;
     }
     
-    if (this.selectedRegion) {
-      filtered = filtered.filter(country => 
-        country.region?.value === this.selectedRegion
-      );
-    }
+    allPaths.forEach((path: Element) => {
+      const svgPath = path as SVGPathElement;
+      const countryCode = svgPath.getAttribute('id');
+      
+      if (!countryCode) return;
+      
+      const countryName = this.COUNTRY_NAMES[countryCode.toLowerCase()] || '';
+      const countryRegion = this.COUNTRY_REGIONS[countryCode.toLowerCase()] || '';
+      
+      let matchesSearch = true;
+      if (this.searchQuery && this.searchQuery.length > 0) {
+        const matchesName = countryName.toLowerCase().includes(this.searchQuery);
+        const matchesCode = countryCode.toLowerCase().includes(this.searchQuery);
+        matchesSearch = matchesName || matchesCode;
+      }
+      
+      let matchesRegion = true;
+      if (this.selectedRegion && this.selectedRegion !== 'All Regions') {
+        matchesRegion = countryRegion === this.selectedRegion;
+      }
+      
+      const matches = matchesSearch && matchesRegion;
+      
+      if (matches) {
+        if (svgPath !== this.selectedPath) {
+          const color = this.selectedRegion && this.selectedRegion !== 'All Regions' 
+            ? regionColors[this.selectedRegion] || '#FFD700'
+            : '#FFD700';
+          this.renderer.setStyle(svgPath, 'fill', color);
+        }
+        this.renderer.setStyle(svgPath, 'opacity', '1');
+        this.renderer.setStyle(svgPath, 'pointer-events', 'auto');
+        matchCount++;
+      } else {
+        if (svgPath !== this.selectedPath) {
+          this.renderer.setStyle(svgPath, 'fill', this.DEFAULT_COLOR);
+        }
+        this.renderer.setStyle(svgPath, 'opacity', '0.15');
+        this.renderer.setStyle(svgPath, 'pointer-events', 'none');
+      }
+    });
     
-    this.filteredCountries = filtered;
+    console.log(`Filters: search="${this.searchQuery}", region="${this.selectedRegion}" - ${matchCount} matches`);
   }
 
-  /**
-   * Loads the SVG map from assets and sanitizes it for safe rendering
-   */
   loadSvgMap(): void {
     this.http.get('assets/map-image.svg', { responseType: 'text' })
       .subscribe({
@@ -138,30 +237,19 @@ export class Map implements OnInit {
       });
   }
 
-  /**
-   * Attaches click event listeners to all country paths in the SVG
-   */
   attachEventListeners(): void {
     const mapContainer = this.elementRef.nativeElement.querySelector('.map-container');
-    if (!mapContainer) {
-      console.error('Map container not found');
-      return;
-    }
+    if (!mapContainer) return;
 
     const svgElement = mapContainer.querySelector('svg');
-    if (!svgElement) {
-      console.error('SVG element not found');
-      return;
-    }
+    if (!svgElement) return;
 
     const countryPaths = svgElement.querySelectorAll('path[id]');
     console.log(`Found ${countryPaths.length} country paths`);
 
     countryPaths.forEach((path: Element) => {
       const svgPath = path as SVGPathElement;
-
       this.renderer.listen(svgPath, 'click', (event: Event) => this.onCountryClick(event));
-
       this.renderer.listen(svgPath, 'mouseenter', (event: Event) => {
         const target = event.target as SVGPathElement;
         if (target !== this.selectedPath) {
@@ -169,7 +257,6 @@ export class Map implements OnInit {
         }
         this.renderer.setStyle(target, 'cursor', 'pointer');
       });
-
       this.renderer.listen(svgPath, 'mouseleave', (event: Event) => {
         const target = event.target as SVGPathElement;
         if (target !== this.selectedPath) {
@@ -179,31 +266,21 @@ export class Map implements OnInit {
     });
   }
 
-  /**
-   * Handles click events on country paths in the SVG map
-   */
   onCountryClick(event: Event): void {
     const target = event.target as SVGPathElement;
     const countryCode = target.getAttribute('id');
-
-    console.log('Country clicked:', countryCode);
 
     if (countryCode) {
       if (this.selectedPath) {
         this.renderer.setStyle(this.selectedPath, 'fill', this.DEFAULT_COLOR);
       }
-
       this.selectedPath = target;
       this.renderer.setStyle(this.selectedPath, 'fill', this.SELECTED_COLOR);
       localStorage.setItem(this.SELECTED_COUNTRY_CODE_KEY, countryCode);
-
       this.loadCountryData(countryCode);
     }
   }
 
-  /**
-   * Load country data with loading state and error handling
-   */
   loadCountryData(countryCode: string): void {
     this.isLoading = true;
     this.showError = false;
@@ -215,14 +292,9 @@ export class Map implements OnInit {
         this.selectedCountry = countryInfo;
         this.isLoading = false;
         this.saveSelectedCountryToStorage(countryInfo);
-        
-        // Load chart data after country info is loaded
         this.loadChartData(countryCode);
-        
-        console.log('✅ Country loaded:', countryInfo.name);
       },
       error: (error) => {
-        console.error('Error fetching country data:', error);
         this.errorMessage = 'Failed to load country information. Please try again.';
         this.showError = true;
         this.isLoading = false;
@@ -230,134 +302,85 @@ export class Map implements OnInit {
     });
   }
 
-  /**
-   * Load GDP chart data for selected country
-   */
   loadChartData(countryCode: string): void {
-    // GDP indicator: NY.GDP.MKTP.CD
     this.worldBankService.getIndicator(countryCode, 'NY.GDP.MKTP.CD', 10).subscribe({
       next: (data) => {
         if (data && data.length > 0) {
-          // Filter out null values and reverse to show chronologically
           const validData = data.filter((d: any) => d.value !== null);
           const years = validData.map((d: any) => d.date).reverse();
           const values = validData.map((d: any) => d.value).reverse();
           
           if (years.length > 0) {
-            this.chartData = {
-              labels: years,
-              values: values,
-              label: 'GDP (Current US$)'
-            };
+            this.chartData = { labels: years, values: values, label: 'GDP (Current US$)' };
             this.showChart = true;
           }
         }
       },
-      error: (error) => {
-        console.error('Error loading chart data:', error);
-        // Don't show error for chart - it's optional
-      }
+      error: (error) => console.error('Error loading chart data:', error)
     });
   }
 
-  /**
-   * Handle error retry
-   */
   handleErrorRetry(): void {
     this.showError = false;
     const savedCountryCode = localStorage.getItem(this.SELECTED_COUNTRY_CODE_KEY);
-    if (savedCountryCode) {
-      this.loadCountryData(savedCountryCode);
-    }
+    if (savedCountryCode) this.loadCountryData(savedCountryCode);
   }
 
-  /**
-   * Saves selected country to localStorage for persistence
-   */
   private saveSelectedCountryToStorage(country: CountryInfo): void {
     try {
-      const countryData = {
-        ...country,
-        savedAt: new Date().toISOString()
-      };
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(countryData));
-      console.log('💾 Saved to localStorage:', country.name);
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ ...country, savedAt: new Date().toISOString() }));
     } catch (error) {
-      console.error('❌ Error saving to localStorage:', error);
+      console.error('Error saving to localStorage:', error);
     }
   }
 
-  /**
-   * Loads previously selected country from localStorage on page load
-   */
   private loadSelectedCountryFromStorage(): void {
     try {
-      const savedCountry = localStorage.getItem(this.STORAGE_KEY);
-
-      if (savedCountry) {
-        const country = JSON.parse(savedCountry);
-        const savedDate = new Date(country.savedAt);
-        const now = new Date();
-        const daysDiff = (now.getTime() - savedDate.getTime()) / (1000 * 60 * 60 * 24);
-
+      const saved = localStorage.getItem(this.STORAGE_KEY);
+      if (saved) {
+        const country = JSON.parse(saved);
+        const daysDiff = (new Date().getTime() - new Date(country.savedAt).getTime()) / (1000 * 60 * 60 * 24);
         if (daysDiff < 7) {
           this.selectedCountry = country;
-          console.log('📥 Loaded saved country:', country.name);
         } else {
           localStorage.removeItem(this.STORAGE_KEY);
           localStorage.removeItem(this.SELECTED_COUNTRY_CODE_KEY);
-          console.log('🗑️ Cleared old saved country data');
         }
       }
     } catch (error) {
-      console.error('❌ Error loading from localStorage:', error);
-      localStorage.removeItem(this.STORAGE_KEY);
-      localStorage.removeItem(this.SELECTED_COUNTRY_CODE_KEY);
+      console.error('Error loading from localStorage:', error);
     }
   }
 
-  /**
-   * Restores the visual selection (blue color) on the SVG after page reload
-   */
   private restoreVisualSelection(): void {
     try {
-      const savedCountryCode = localStorage.getItem(this.SELECTED_COUNTRY_CODE_KEY);
-
-      if (savedCountryCode) {
+      const code = localStorage.getItem(this.SELECTED_COUNTRY_CODE_KEY);
+      if (code) {
         const mapContainer = this.elementRef.nativeElement.querySelector('.map-container');
-        if (!mapContainer) return;
-
-        const svgElement = mapContainer.querySelector('svg');
-        if (!svgElement) return;
-
-        const countryPath = svgElement.querySelector(`path[id="${savedCountryCode}"]`);
-
-        if (countryPath) {
-          this.selectedPath = countryPath as SVGPathElement;
+        const svgElement = mapContainer?.querySelector('svg');
+        const path = svgElement?.querySelector(`path[id="${code}"]`);
+        if (path) {
+          this.selectedPath = path as SVGPathElement;
           this.renderer.setStyle(this.selectedPath, 'fill', this.SELECTED_COLOR);
-          console.log('🎨 Restored visual selection for:', savedCountryCode);
         }
       }
     } catch (error) {
-      console.error('Error restoring visual selection:', error);
+      console.error('Error restoring selection:', error);
     }
   }
 
-  /**
-   * Clears the selected country and resets visual selection
-   */
   clearSelection(): void {
     if (this.selectedPath) {
       this.renderer.setStyle(this.selectedPath, 'fill', this.DEFAULT_COLOR);
       this.selectedPath = null;
     }
-
     this.selectedCountry = null;
     this.showChart = false;
     this.chartData = null;
+    this.searchQuery = '';
+    this.selectedRegion = '';
+    this.filterCountriesOnMap();
     localStorage.removeItem(this.STORAGE_KEY);
     localStorage.removeItem(this.SELECTED_COUNTRY_CODE_KEY);
-
-    console.log('🗑️ Selection cleared');
   }
 }
